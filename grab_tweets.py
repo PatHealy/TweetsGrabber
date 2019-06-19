@@ -26,19 +26,32 @@ def get_tweets(api, profile):
     #https://gist.github.com/yanofsky/5436496
     #This script extends on the logic of yanofsky by creating a pandas dataframe for easier analysis
     all_tweets = []  
-    new_tweets = api.user_timeline(screen_name=profile.screen_name, include_rts=False, count=200, tweet_mode='extended')
+    new_tweets = api.user_timeline(screen_name=profile.screen_name, count=200, tweet_mode='extended')
     all_tweets.extend(new_tweets)
     oldest = all_tweets[-1].id - 1
     while len(new_tweets) > 0:
-        new_tweets = api.user_timeline(screen_name=profile.screen_name, count=200, max_id=oldest, include_rts=False, tweet_mode='extended')
+        new_tweets = api.user_timeline(screen_name=profile.screen_name, count=200, max_id=oldest, tweet_mode='extended')
         all_tweets.extend(new_tweets)
         oldest = all_tweets[-1].id - 1
     #end section adopted from yanofsky
 
     for tweet in all_tweets:
-        data.append([tweet.full_text, tweet.favorite_count, tweet.retweet_count, tweet.created_at])
+        #check for presence of media
+        has_image = False
+        has_video = False
+        has_gif = False
+        if 'extended_entities' in vars(tweet).keys() and 'media' in tweet.extended_entities.keys():
+            for m in tweet.extended_entities['media']:
+                if m['type'] == 'photo':
+                    has_image = True
+                if m['type'] == 'video':
+                    has_video = True
+                if m['type'] == 'animated_gif':
+                    has_gif = True
+        #text of the tweets, number of followers, number of retweets, whether the tweets are replies/quote tweets, date/time of posting, and the kind of media attached to the tweets
+        data.append([tweet.full_text, tweet.favorite_count, tweet.retweet_count, tweet.created_at, (tweet.in_reply_to_user_id is not None) and not tweet.retweeted, tweet.is_quote_status and not tweet.retweeted, tweet.retweeted, has_image, has_video, has_gif])
 
-    tweets = pd.DataFrame(data, columns = ['text', 'favorite_count', 'retweet_count', 'created_at'])
+    tweets = pd.DataFrame(data, columns = ['text', 'favorite_count', 'retweet_count', 'created_at', 'is_reply', 'is_quote', 'is_retweet', 'has_image', 'has_video', 'has_gif'])
     tweets = tweets.set_index('created_at')
 
     print("==============================")
@@ -78,3 +91,6 @@ except:
     traceback.print_exc()
     print("\n==========================================\n")
     show_usage()
+
+
+
