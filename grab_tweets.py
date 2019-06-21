@@ -48,8 +48,10 @@ def get_tweets(api, profile):
                     has_video = True
                 if m['type'] == 'animated_gif':
                     has_gif = True
-        #text of the tweets, number of followers, number of retweets, whether the tweets are replies/quote tweets, date/time of posting, and the kind of media attached to the tweets
-        data.append([tweet.full_text, tweet.favorite_count, tweet.retweet_count, tweet.created_at, (tweet.in_reply_to_user_id is not None) and not tweet.retweeted, tweet.is_quote_status and not tweet.retweeted, tweet.retweeted, has_image, has_video, has_gif])
+
+        is_retweet = hasattr(tweet, 'retweeted_status')
+
+        data.append([tweet.full_text, tweet.favorite_count, tweet.retweet_count, tweet.created_at, (tweet.in_reply_to_user_id is not None) and not is_retweet, tweet.is_quote_status and not is_retweet, is_retweet, has_image, has_video, has_gif])
 
     tweets = pd.DataFrame(data, columns = ['text', 'favorite_count', 'retweet_count', 'created_at', 'is_reply', 'is_quote', 'is_retweet', 'has_image', 'has_video', 'has_gif'])
     tweets = tweets.set_index('created_at')
