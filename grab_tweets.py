@@ -49,11 +49,28 @@ def get_tweets(api, profile):
                 if m['type'] == 'animated_gif':
                     has_gif = True
 
+        favorite_count = tweet.favorite_count
+        retweet_count = tweet.retweet_count
         is_retweet = hasattr(tweet, 'retweeted_status')
+        full_text = tweet.full_text
+        retweeted_user_screen_name = None
+        parent_tweet_screen_name = None
+        is_reply = (tweet.in_reply_to_user_id is not None) and not is_retweet
 
-        data.append([tweet.full_text, tweet.favorite_count, tweet.retweet_count, tweet.created_at, (tweet.in_reply_to_user_id is not None) and not is_retweet, tweet.is_quote_status and not is_retweet, is_retweet, has_image, has_video, has_gif])
+        if is_retweet:
+            this_tweet = tweet.retweeted_status
+            full_text = this_tweet.full_text
+            favorite_count = this_tweet.favorite_count
+            retweet_count = this_tweet.retweet_count
+            parent_tweet_screen_name = this_tweet.user.screen_name
+        elif tweet.is_quote_status:
+            parent_tweet_screen_name = tweet.quoted_status.user.screen_name
+        elif is_reply:
+            parent_tweet_screen_name = tweet.in_reply_to_screen_name
 
-    tweets = pd.DataFrame(data, columns = ['text', 'favorite_count', 'retweet_count', 'created_at', 'is_reply', 'is_quote', 'is_retweet', 'has_image', 'has_video', 'has_gif'])
+        data.append([full_text, favorite_count, retweet_count, tweet.created_at, is_reply, tweet.is_quote_status and not is_retweet, is_retweet, has_image, has_video, has_gif, parent_tweet_screen_name])
+
+    tweets = pd.DataFrame(data, columns = ['text', 'favorite_count', 'retweet_count', 'created_at', 'is_reply', 'is_quote', 'is_retweet', 'has_image', 'has_video', 'has_gif', 'parent_tweet_screen_name'])
     tweets = tweets.set_index('created_at')
 
     print("==============================")
