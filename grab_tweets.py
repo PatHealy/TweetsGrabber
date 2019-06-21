@@ -64,7 +64,10 @@ def get_tweets(api, profile):
             retweet_count = this_tweet.retweet_count
             parent_tweet_screen_name = this_tweet.user.screen_name
         elif tweet.is_quote_status:
-            parent_tweet_screen_name = tweet.quoted_status.user.screen_name
+            if 'quoted_status' not in vars(tweet).keys():
+                parent_tweet_screen_name = 'Not Available'
+            else:
+                parent_tweet_screen_name = tweet.quoted_status.user.screen_name
         elif is_reply:
             parent_tweet_screen_name = tweet.in_reply_to_screen_name
 
@@ -72,11 +75,6 @@ def get_tweets(api, profile):
 
     tweets = pd.DataFrame(data, columns = ['text', 'favorite_count', 'retweet_count', 'created_at', 'is_reply', 'is_quote', 'is_retweet', 'has_image', 'has_video', 'has_gif', 'parent_tweet_screen_name'])
     tweets = tweets.set_index('created_at')
-
-    print("==============================")
-    print(tweets)
-    print("==============================")
-
     return tweets
 
 try:
@@ -103,8 +101,7 @@ try:
     tweets.to_csv(profile.screen_name +'_tweets.csv', encoding='utf-8-sig')
 
     print("Tweets saved to " + profile.screen_name + '_tweets.csv')
-    print("==========================")
-    print("Completed.")
+    print()
 
 except:
     traceback.print_exc()
