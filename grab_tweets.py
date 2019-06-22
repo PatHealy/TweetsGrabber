@@ -105,7 +105,7 @@ try:
 
 except:
     traceback.print_exc()
-    print("\n==========================================\n")
+    print("\n===========\n")
     show_usage()
 
 
